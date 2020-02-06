@@ -1,0 +1,27 @@
+---
+- name: install packages
+  yum:
+    name: bacula-client
+    state: present
+
+
+- name:  copy config file
+  template:
+    src: bacula-fd.conf.j2
+    dest: /etc/bacula/bacula-fd.conf
+  notify: restart bacula-fd
+
+
+- name: start and enable service
+  systemd:
+    name: bacula-fd
+    state: started
+    enabled: yes
+
+
+- name: configure firewalld
+  firewalld:
+    service: bacula-client
+    state: enabled
+    permanent: yes
+    immediate: yes

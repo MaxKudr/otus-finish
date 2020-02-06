@@ -1,0 +1,40 @@
+---
+- name: install packages
+  yum:
+    name: php-fpm
+    state: present
+
+
+- name: disable service
+  service:
+    name: php-fpm
+    enabled: no
+
+
+- name: configure php-fpm (copy)
+  copy:
+    src: 'php-fpm/php-fpm.conf'
+    dest: '/etc/php-fpm.conf'
+
+
+- name: configure php-fpm (template)
+  template:
+    src: 'php-fpm/www.conf.j2'
+    dest: '/etc/php-fpm.d/www.conf'
+
+
+- name: create run folder
+  file:
+    path: '/run/php-fpm'
+    owner: root
+    group: root
+    mode: 0755
+    state: directory
+
+- name: create sessions folder
+  file:
+    path: '/var/lib/php/session'
+    owner: root
+    group: nginx
+    mode: 0770
+    state: directory

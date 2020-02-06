@@ -1,0 +1,43 @@
+---
+- name: install EPEL repo
+  yum:
+    name: epel-release
+    state: present
+
+
+- name: install CEPH repo
+  yum:
+    name: https://download.ceph.com/rpm-nautilus/el7/noarch/ceph-release-1-1.el7.noarch.rpm
+    state: present
+
+
+- name: install packages
+  yum:
+    name: ceph-common
+    state: present
+
+
+- name: copy config
+  template:
+    src: ceph.conf.j2
+    dest: /etc/ceph/ceph.conf
+
+
+- name: copy keystore
+  copy:
+    src: ceph.client.admin.keyring
+    dest: /etc/ceph
+
+
+- name: copy rbdmap
+  template:
+    src: rbdmap.j2
+    dest: /etc/ceph/rbdmap
+  notify: reload rbdmap
+
+
+- name: start and enable service
+  systemd:
+    name: rbdmap
+    state: started
+    enabled: yes

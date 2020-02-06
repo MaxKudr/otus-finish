@@ -1,0 +1,10 @@
+---
+- name: check exist pool
+  command: 'ceph osd pool ls'
+  register: ceph_pool
+  changed_when: false
+
+
+- name: create pool
+  command: 'ceph osd pool create {{ ceph_pool_name }} 128 128'
+  when: 'ceph_pool_name not in ceph_pool.stdout'

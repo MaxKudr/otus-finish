@@ -1,0 +1,72 @@
+---
+- hosts:
+    - all
+  become: yes
+  roles:
+    - general
+    - zabbix-agent
+    - journald-upload
+    - bacula-client
+
+
+- hosts:
+    - pg01
+    - pg02
+    - pg03
+  become: yes
+  roles:
+    - postgresql
+    - patroni
+    - pgbouncer
+
+
+- hosts:
+    - ha01
+    - ha02
+    - ha03
+  become: yes
+  roles:
+    - consul
+    - role: keepalive
+      vrrp_master_address: '10.10.10.4'
+      vrrp_vip_address: '10.10.10.14/27'
+      vrrp_router_id: '50'
+      vrrp_password: 'zCC5fB6y1PEb7Wp4'
+    - haproxy
+
+
+- hosts:
+    - zmon01
+    - zmon02
+  become: yes
+  roles:
+    - zabbix-server
+
+
+- hosts:
+    - bkp01
+    - bkp02
+  become: yes
+  roles:
+    - ceph-client
+    - journald-remote
+    - bacula-server
+
+
+- hosts:
+    - ceph01
+    - ceph02
+    - ceph03
+  become: yes
+  roles:
+    - ceph-cluster
+
+
+- hosts:
+    - zmon01
+    - zmon02
+    - bkp01
+    - bkp02
+  become: yes
+  roles:
+    - pacemaker

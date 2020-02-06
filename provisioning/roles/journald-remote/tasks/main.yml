@@ -1,0 +1,40 @@
+---
+- name: install packages
+  yum:
+    name: systemd-journal-gateway
+    state: present
+
+
+- name: create log directory
+  file:
+    path: /var/log/journal/remote
+    state: directory
+    owner: systemd-journal-remote
+    group: systemd-journal-remote
+
+
+- name: create dir for custom service
+  file:
+    path: /etc/systemd/system/systemd-journal-remote.service.d
+    state: directory
+
+
+- name: copy customize service config
+  copy:
+    src: custom.conf
+    dest: /etc/systemd/system/systemd-journal-remote.service.d/
+
+
+- name: disable service
+  systemd:
+    name: systemd-journal-remote
+    enabled: no
+    daemon_reload: yes
+
+
+- name: configure firewalld
+  firewalld:
+    port: 19531-19532/tcp
+    state: enabled
+    permanent: yes
+    immediate: yes

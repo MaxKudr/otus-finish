@@ -1,0 +1,17 @@
+---
+- name: set timezone to Europe/Moscow
+  timezone:
+    name: Europe/Moscow
+
+
+- name: install packages
+  yum:
+    name: chrony
+    state: present
+
+
+- name: start and enable service
+  systemd:
+    name: chronyd
+    state: started
+    enabled: yes

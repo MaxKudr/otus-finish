@@ -1,0 +1,21 @@
+---
+ceph_cluster_name: 'ceph'
+
+ceph_mon_host:
+  ceph01: '10.10.10.11'
+  ceph02: '10.10.10.12'
+  ceph03: '10.10.10.13'
+
+ceph_pool_name: 'backup-pool'
+
+ceph_rbds:
+  'bacula':
+    'size': '8G'
+    'owner': '133'
+    'group': '133'
+    'setype': 'bacula_store_t'
+  'journal-remote':
+    'size': '8G'
+    'owner': '996'
+    'group': '993'
+    'setype': 'var_log_t'

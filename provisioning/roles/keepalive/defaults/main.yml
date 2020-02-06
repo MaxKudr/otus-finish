@@ -1,0 +1,5 @@
+---
+vrrp_master_address: '0.0.0.0'
+vrrp_vip_address: '0.0.0.0'
+vrrp_router_id: '0'
+vrrp_password: ''

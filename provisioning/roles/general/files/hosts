@@ -1,0 +1,20 @@
+127.0.0.1	localhost localhost.localdomain localhost4 localhost4.localdomain4
+
+10.10.10.1	pg01 pg01.otus.loc
+10.10.10.2	pg02 pg02.otus.loc
+10.10.10.3	pg03 pg03.otus.loc
+10.10.10.4	ha01 ha01.otus.loc
+10.10.10.5	ha02 ha02.otus.loc
+10.10.10.6	ha03 ha03.otus.loc
+10.10.10.7	zmon01 zmon01.otus.loc
+10.10.10.8	zmon02 zmon02.otus.loc
+10.10.10.9	bkp01 bkp01.otus.loc
+10.10.10.10	bkp02 bkp02.otus.loc
+10.10.10.11	ceph01 ceph01.otus.loc
+10.10.10.12	ceph02 ceph02.otus.loc
+10.10.10.13	ceph03 ceph03.otus.loc
+10.10.10.14	pg pg.otus.loc dcs dcs.otus.loc
+10.10.10.15	zmon zmon.otus.loc
+10.10.10.16	zweb zweb.otus.loc
+10.10.10.17	bkp bkp.otus.loc
+10.10.10.18	log log.otus.loc

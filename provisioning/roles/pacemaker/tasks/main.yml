@@ -1,0 +1,70 @@
+---
+- name: install packages
+  yum:
+    name:
+      - bzip2
+      - pacemaker
+      - pcs
+
+
+- name: set password for user hacluster
+  user:
+    name: '{{ cluster_user_name }}'
+#   password: otuscluster
+    password: '$1$09/I/RH9$pXxwPzTEluL1W3nmw3rIx.'
+
+
+#- name: update hosts file (remove 127.0.0.1)
+#  lineinfile:
+#    path: /etc/hosts
+#    regexp: '127.0.0.1.*otus.*'
+#    state: absent
+
+
+- name: check cluster configuration
+  stat:
+    path: /etc/corosync/corosync.conf
+  register: cluster_config
+
+
+- name: start and enable pcsd service
+  systemd:
+    name: pcsd
+    state: started
+    enabled: yes
+
+
+- name: stop cluster
+  command: pcs cluster stop
+  when: cluster_config.stat.exists == true
+
+
+- name: copy cluster configuration
+  copy:
+    src: cluster.tar.bz2
+    dest: /tmp/
+
+
+- name: recover cluster configuration
+  command: pcs config restore --local /tmp/cluster.tar.bz2
+
+
+- name: authorization in cluster
+  command: pcs cluster auth {{ ansible_hostname }} -u {{ cluster_user_name }} -p {{ cluster_user_pass }}
+  register: result
+  failed_when: '": Authorized" not in result.stdout'
+
+- name: start cluster
+  command: pcs cluster start
+
+
+- name: enable cluster
+  command: pcs cluster enable
+
+
+- name: configure firewalld
+  firewalld:
+    service: high-availability
+    state: enabled
+    permanent: yes
+    immediate: yes

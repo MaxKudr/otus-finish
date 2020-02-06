@@ -1,0 +1,78 @@
+---
+- name: install EPEL repo
+  yum:
+    name: epel-release
+    state: present
+
+
+- name: install CEPH repo
+  yum:
+    name: https://download.ceph.com/rpm-nautilus/el7/noarch/ceph-release-1-1.el7.noarch.rpm
+    state: present
+
+
+- name: install packages
+  yum:
+    name: ceph
+    state: present
+
+
+- name: create config dir
+  file:
+    path: /etc/ceph
+    state: directory
+
+
+- name: get active ceph-mon nodes
+  wait_for: host='{{ item.value }}' port='6789' state=started delay=0 timeout=3
+  with_dict: '{{ ceph_mon_host }}'
+  ignore_errors: yes
+  register: mon_nodes
+
+
+- name: update delegate nodes list
+  set_fact:
+    ceph_mon_delegate: "{{ ceph_mon_delegate | union([item.item.key]) if (item.failed == False) else ceph_mon_delegate }}"
+  with_items: '{{ mon_nodes.results }}'
+  loop_control:
+    label: "{{ item.item.key }}"
+
+
+- name: update online nodes ip list
+  set_fact:
+    ceph_mon_online: "{{ ceph_mon_online| union([item.item.value]) if (item.failed == False) else ceph_mon_online }}"
+  with_items: '{{ mon_nodes.results }}'
+  loop_control:
+    label: "{{ item.item.value }}"
+
+
+- name: copy config file
+  template: src=ceph.conf.j2 dest=/etc/ceph/ceph.conf
+  delegate_to: '{{ item }}'
+  with_items: '{{ ceph_mon_delegate }}'
+
+
+- name: copy keyring files
+  copy: src={{ item.src }} dest={{ item.dest }}
+  with_items:
+    - { src: 'ceph.client.admin.keyring', dest: '/etc/ceph/' }
+
+
+- name: configure firewalld
+  firewalld:
+    service: ceph
+    state: enabled
+    permanent: yes
+    immediate: yes
+
+
+- include_tasks: ceph-mon.yml
+- include_tasks: ceph-mgr.yml
+- include_tasks: ceph-osd.yml
+
+
+- block:
+  - include_tasks: ceph-pool.yml
+  - include_tasks: ceph-rbd.yml
+
+  when: 'ceph_mon_online | length > 2'

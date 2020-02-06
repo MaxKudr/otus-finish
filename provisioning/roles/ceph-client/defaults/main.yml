@@ -1,0 +1,4 @@
+---
+ceph_cluster_name: 'ceph'
+ceph_mon_host: '10.10.10.10,10.10.10.11,10.10.10.12'
+ceph_pool_name: 'backup-pool'

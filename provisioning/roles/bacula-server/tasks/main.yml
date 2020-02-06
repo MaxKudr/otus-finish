@@ -1,0 +1,11 @@
+---
+- include_tasks: bacula-dir.yml
+- include_tasks: bacula-sd.yml
+
+
+- name: configure firewalld
+  firewalld:
+    service: bacula
+    state: enabled
+    permanent: yes
+    immediate: yes

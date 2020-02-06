@@ -1,0 +1,15 @@
+server {
+        listen *:80 default_server;
+
+        server_name _;
+
+        root /usr/share/zabbix;
+
+        index index.php index.html index.htm;
+
+        location ~ (?:^|/)\. {
+                deny all;
+        }
+
+        include /etc/nginx/php.conf;
+}

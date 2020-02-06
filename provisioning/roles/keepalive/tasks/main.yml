@@ -1,0 +1,36 @@
+---
+- name: install packages
+  yum:
+    name: keepalived
+    state: present
+
+
+- set_fact:
+    otus_vrrp_role: 'BACKUP'
+
+
+- set_fact:
+    otus_vrrp_role: 'MASTER'
+  when: "vrrp_master_address == ansible_eth1.ipv4.address"
+
+
+- name: copy keepalive config
+  template:
+    src: keepalived.conf.j2
+    dest: /etc/keepalived/keepalived.conf
+  notify: reload keepalived
+
+
+- name: start and enable service
+  systemd:
+    name: keepalived
+    state: started
+    enabled: yes
+
+
+- name: configure firewalld
+  firewalld:
+    rich_rule: rule protocol value="vrrp" accept
+    state: enabled
+    permanent: yes
+    immediate: yes

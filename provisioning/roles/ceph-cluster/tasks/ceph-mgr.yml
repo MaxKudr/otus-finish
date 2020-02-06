@@ -1,0 +1,20 @@
+---
+- name: create keyring directory
+  file:
+    path: /var/lib/ceph/mgr/{{ ceph_cluster_name }}-{{ ansible_hostname }}
+    state: directory
+    owner: ceph
+    group: ceph
+
+
+- name: create authentication key for daemon
+  shell: "ceph auth get-or-create mgr.{{ ansible_hostname }} mon 'allow profile mgr' osd 'allow *' mds 'allow *' > /var/lib/ceph/mgr/{{ ceph_cluster_name }}-{{ ansible_hostname }}/keyring"
+  become_user: ceph
+  changed_when: false
+
+
+- name: start and enable ceph-mgr service
+  systemd:
+    name: ceph-mgr@{{ ansible_hostname }}
+    state: started
+    enabled: yes

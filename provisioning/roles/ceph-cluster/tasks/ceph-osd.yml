@@ -1,0 +1,57 @@
+---
+- name: create OSD
+  shell: 'ceph osd new {{ ansible_hostname | to_uuid }}'
+  register: osd_out
+  changed_when: false
+
+
+- name: set osd_id
+  set_fact:
+    osd_id: "{{ osd_out.stdout }}"
+
+
+- name: create fs on /dev/sdb
+  filesystem:
+    fstype: ext4
+    dev: /dev/sdb
+
+
+- name: mount /dev/sdb
+  mount:
+    path: /var/lib/ceph/osd/{{ ceph_cluster_name }}-{{ osd_id }}
+    src: /dev/sdb
+    fstype: ext4
+    state: mounted
+
+
+- name: fix permissions
+  file:
+    path: /var/lib/ceph/osd/{{ ceph_cluster_name }}-{{ osd_id }}
+    owner: ceph
+    group: ceph
+
+
+- name: generate keyring
+  shell: "ceph auth get-or-create osd.{{ osd_id }} mon 'profile osd' mgr 'profile osd' osd 'allow *' > /var/lib/ceph/osd/{{ ceph_cluster_name }}-{{ osd_id }}/keyring"
+  become_user: ceph
+  changed_when: false
+
+
+- name: check OSD data dir
+  stat:
+    path: /var/lib/ceph/osd/{{ ceph_cluster_name }}-{{ osd_id }}/fsid
+  register: osd_dir
+
+
+- name: initialize OSD data dir
+  command: 'ceph-osd -i {{ osd_id }} --mkfs --osd-uuid {{ ansible_hostname | to_uuid }}'
+  become_user: ceph
+  when: osd_dir.stat.exists == false
+  changed_when: false
+
+
+- name: start and enable ceph-osd service
+  systemd:
+    name: ceph-osd@{{ osd_id }}
+    state: started
+    enabled: yes

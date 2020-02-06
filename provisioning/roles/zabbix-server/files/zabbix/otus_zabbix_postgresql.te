@@ -1,0 +1,9 @@
+module otus_zabbix_postgresql 1.0;
+
+require {
+	type postgresql_port_t;
+	type httpd_t;
+	class tcp_socket name_connect;
+}
+
+allow httpd_t postgresql_port_t:tcp_socket name_connect;

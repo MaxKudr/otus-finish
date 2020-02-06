@@ -1,0 +1,51 @@
+---
+- name: install Nginx repo
+  yum:
+    name: http://nginx.org/packages/centos/7/noarch/RPMS/nginx-release-centos-7-0.el7.ngx.noarch.rpm
+    state: present
+ 
+ 
+- name: install packages
+  yum:
+    name: nginx
+    state: present
+ 
+ 
+- name: disable service
+  systemd:
+    name: nginx
+    enabled: no
+ 
+ 
+- name: remove unwanted files
+  file: name='/etc/nginx/{{ item }}' state=absent
+  with_items:
+    - 'fastcgi_params'
+    - 'win-utf'
+    - 'koi-utf'
+    - 'koi-win'
+    - 'scgi_params'
+    - 'uwsgi_params'
+ 
+ 
+- name: configure Nginx (copy)
+  copy: src='nginx/{{ item }}' dest='/etc/nginx/'
+  with_items:
+    - 'fastcgi.conf'
+    - 'php.conf'
+    - 'mime.types'
+ 
+ 
+- name: configure Nginx (template)
+  template: src='nginx/{{ item }}.j2' dest='/etc/nginx/{{ item }}'
+  with_items:
+    - 'nginx.conf'
+    - 'conf.d/default.conf'
+
+
+- name: configure firewalld
+  firewalld:
+    service: http
+    state: enabled
+    permanent: yes
+    immediate: yes

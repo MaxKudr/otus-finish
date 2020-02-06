@@ -1,0 +1,61 @@
+---
+- name: install EPEL repo
+  yum:
+    name: epel-release
+    state: present
+
+#
+# https://www.cybertec-postgresql.com/en/patroni-setting-up-a-highly-available-postgresql-cluster/
+#
+- name: install packages
+  yum:
+    name: https://github.com/cybertec-postgresql/patroni-packaging/releases/download/1.6.0-1/patroni-1.6.0-1.rhel7.x86_64.rpm
+    state: present
+
+
+- name: create directories
+  file:
+    path: '{{ item }}'
+    state: directory
+    owner: postgres
+    group: postgres
+    mode: 0700
+  with_items:
+    - /var/lib/patroni/data
+
+
+- name: copy config file
+  template:
+    src: patroni.yml.j2
+    dest: /opt/app/patroni/etc/postgresql.yml
+  notify: restart patroni
+
+
+- name: copy import DBs script
+  copy:
+    src: import_dbs.sh
+    dest: /tmp/
+    mode: 0755
+
+
+- name: copy dump of DBs
+  copy: src={{ item }} dest=/tmp/
+  with_items:
+    - roles.sql
+    - zabbix.dump
+    - bacula.dump
+
+
+- name: start and enable service
+  systemd:
+    name: patroni
+    state: started
+    enabled: true
+
+
+- name: configure firewalld
+  firewalld:
+    port: 8008/tcp
+    state: enabled
+    permanent: yes
+    immediate: yes

@@ -1,0 +1,52 @@
+---
+- name: check data direcotry
+  stat:
+    path: /var/lib/ceph/mon/{{ ceph_cluster_name }}-{{ ansible_hostname }}
+  register: mon_dir
+
+
+- block:
+  - name: copy temp keyring
+    copy:
+      src: ceph-mon/ceph.mon.keyring
+      dest: /tmp/
+      owner: ceph
+      group: ceph
+  
+  
+  - name: create default data directory
+    file:
+      path: /var/lib/ceph/mon/{{ ceph_cluster_name }}-{{ ansible_hostname }}
+      owner: ceph
+      group: ceph
+      state: directory
+  
+  
+  - name: populate the monitor daemons
+    command: 'ceph-mon --cluster {{ ceph_cluster_name }} --mkfs -i {{ ansible_hostname }} --keyring /tmp/ceph.mon.keyring'
+    become: yes
+    become_user: ceph
+    changed_when: false
+  
+  
+  - name: remove temp keyring
+    file:
+      path: /tmp/ceph.mon.keyring
+      state: absent
+
+  when: mon_dir.stat.exists == false
+
+
+- name: start and enalbe ceph-mon service
+  systemd:
+    name: ceph-mon@{{ ansible_hostname }}
+    state: started
+    enabled: yes
+
+
+- name: configure firewalld
+  firewalld:
+    service: ceph-mon
+    state: enabled
+    permanent: yes
+    immediate: yes

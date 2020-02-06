@@ -1,0 +1,4 @@
+---
+ceph_mon_delegate: ["{{ ansible_hostname }}"]
+ceph_mon_online: ["{{ ansible_eth1.ipv4.address }}"]
+ceph_rbds_create: []

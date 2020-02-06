@@ -1,0 +1,5 @@
+---
+- name: reload rbdmap
+  systemd:
+    name: rbdmap
+    state: reloaded

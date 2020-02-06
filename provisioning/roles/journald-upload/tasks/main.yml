@@ -1,0 +1,32 @@
+---
+- name: install packages
+  yum:
+    name: systemd-journal-gateway
+    state: present
+
+
+- name: copy config file
+  copy:
+    src: journal-upload.conf
+    dest: /etc/systemd
+  notify: restart journal-upload
+
+
+- name: create dir for custom service
+  file:
+    path: /etc/systemd/system/systemd-journal-upload.service.d
+    state: directory
+
+
+- name: copy custom conf
+  copy:
+    src: custom.conf
+    dest: /etc/systemd/system/systemd-journal-upload.service.d
+
+
+- name: start and enable service
+  systemd:
+    name: systemd-journal-upload
+    state: started
+    enabled: yes
+    daemon_reload: yes

@@ -1,0 +1,45 @@
+---
+- name: install packages
+  yum:
+    name:
+      - bacula-director
+      - bacula-console
+    state: present
+
+
+- name: create jobs directory
+  file:
+    path: /etc/bacula/bacula-dir.conf.d/jobs
+    state: directory
+
+
+- name: copy jobs config
+  unarchive: src={{ item }} dest=/etc/bacula/bacula-dir.conf.d/
+  with_items:
+    - jobs.tgz
+    - filesets.tgz
+
+
+- name: copy config
+  template:
+    src: bacula-dir.conf.j2
+    dest: /etc/bacula/bacula-dir.conf
+
+
+- name: copy bconsole config
+  template:
+    src: bconsole.conf.j2
+    dest: /etc/bacula/bconsole.conf
+
+
+- name: configure to use PostgreSQL
+  file:
+    src: /usr/lib64/libbaccats-postgresql.so
+    dest: /etc/alternatives/libbaccats.so
+    state: link
+
+
+- name: disable service
+  systemd:
+    name: bacula-dir
+    enabled: no

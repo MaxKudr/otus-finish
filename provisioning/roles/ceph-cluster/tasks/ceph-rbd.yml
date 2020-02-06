@@ -1,0 +1,80 @@
+---
+- name: init rbd pool
+  command: 'rbd pool init {{ ceph_pool_name }}'
+  changed_when: false
+
+
+- name: get exist rbd
+  command: 'rbd ls {{ ceph_pool_name }}'
+  register: rbds
+  changed_when: false
+
+
+- name: update rbds item list
+  set_fact:
+    ceph_rbds_create: "{{ ceph_rbds_create | union([item.key]) | difference(rbds.stdout_lines) }}"
+  with_dict: '{{ ceph_rbds }}'
+
+
+- name: create rbds
+  command: 'rbd create --size {{ ceph_rbds[item]["size"] }} {{ ceph_pool_name }}/{{ item }}'
+  changed_when: false
+  with_items: '{{ ceph_rbds_create }}'
+
+
+- name: disable rbds fatures
+  command: 'rbd feature disable {{ ceph_pool_name }}/{{ item }} object-map fast-diff deep-flatten'
+  changed_when: false
+  with_items: '{{ ceph_rbds_create }}'
+
+
+- name: map rbds
+  command: 'rbd map {{ ceph_pool_name }}/{{ item }}'
+  changed_when: false
+  with_items: '{{ ceph_rbds_create }}'
+
+
+- name: create fs on rbds
+  filesystem:
+    fstype: ext4
+    dev: '/dev/rbd/{{ ceph_pool_name }}/{{ item }}'
+  with_items: '{{ ceph_rbds_create }}'
+
+
+- name: temporary mount rbds
+  mount:
+    path: '/mnt/{{ item }}'
+    src: '/dev/rbd/{{ ceph_pool_name}}//{{ item }}'
+    fstype: ext4
+    state: mounted
+  with_items: '{{ ceph_rbds_create }}'
+
+
+- name: fix owner and group
+  command: 'chown {{ ceph_rbds[item]["owner"] }}:{{ ceph_rbds[item]["group"] }} /mnt/{{ item }}'
+  with_items: '{{ ceph_rbds_create }}'
+
+
+- name: fix SELinux context
+  file: path='/mnt/{{ item }}' setype={{ ceph_rbds[item]["setype"] }}
+  with_items: '{{ ceph_rbds_create }}'
+
+
+- name: unmount rbds
+  mount:
+    path: '/mnt/{{ item }}'
+    state: unmounted
+  with_items: '{{ ceph_rbds_create }}'
+
+
+- name: remove unneeded mountpoints
+  file:
+    path: '/mnt/{{ item }}'
+    state: absent
+  with_items: '{{ ceph_rbds_create }}'
+
+
+- name: unmap rbds
+  command: 'rbd unmap {{ ceph_pool_name }}/{{ item }}'
+  changed_when: false
+  with_items: '{{ ceph_rbds_create }}'

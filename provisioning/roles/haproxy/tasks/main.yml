@@ -1,0 +1,44 @@
+---
+- name: install packages
+  yum:
+    name:
+      - haproxy
+      - libsemanage-python
+    state: present
+
+
+- name: configure SELinux
+  seboolean:
+    name: haproxy_connect_any
+    state: yes
+    persistent: yes
+
+
+- name: copy config file
+  copy:
+    src: haproxy.cfg
+    dest: /etc/haproxy/
+  notify: restart haproxy
+
+
+- name: start and enable service
+  systemd:
+    name: haproxy
+    state: started
+    enabled: yes
+
+
+- name: configure firewalld
+  firewalld:
+    port: 8080/tcp
+    state: enabled
+    permanent: yes
+    immediate: yes
+
+
+- name: configure firewalld for PostgreSQL
+  firewalld:
+    port: 5432/tcp
+    state: enabled
+    permanent: yes
+    immediate: yes
