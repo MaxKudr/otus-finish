@@ -2,6 +2,7 @@
 * = host={{ ansible_eth1.ipv4.address }} port=5432 auth_user=postgres
 
 [pgbouncer]
+pool_mode = transaction
 logfile = /var/log/pgbouncer/pgbouncer.log
 pidfile = /var/run/pgbouncer/pgbouncer.pid
 listen_addr = {{ ansible_eth1.ipv4.address }}
@@ -10,3 +11,5 @@ auth_type = md5
 auth_file = /etc/pgbouncer/userlist.txt
 admin_users = postgres
 stats_users = stats, postgres
+log_connections = 0
+log_disconnections = 0
